@@ -69,7 +69,7 @@ librimongo/
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/yourusername/librimongo.git
+   git clone https://github.com/Jordimlies/librimongo.git
    cd librimongo
    ```
 
