@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}{% if book %}Editar Libro: {{ book.title }}{% else %}Agregar Nuevo Libro{% endif %} - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">{% if book %}Editar Libro: {{ book.title }}{% else %}Agregar Nuevo Libro{% endif %}</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Información del Libro</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <!-- Columna Izquierda -->
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">{{ form.title.label }}</label>
+                            {{ form.title(class="form-control", placeholder="Introduce el título del libro") }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="author" class="form-label">{{ form.author.label }}</label>
+                            {{ form.author(class="form-control", placeholder="Introduce el nombre del autor") }}
+                            {% if form.author.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.author.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="year" class="form-label">{{ form.year.label }}</label>
+                                    {{ form.year(class="form-control", placeholder="Año de publicación") }}
+                                    {% if form.year.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.year.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="isbn" class="form-label">{{ form.isbn.label }}</label>
+                                    {{ form.isbn(class="form-control", placeholder="ISBN") }}
+                                    {% if form.isbn.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.isbn.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="language" class="form-label">{{ form.language.label }}</label>
+                                    {{ form.language(class="form-control", placeholder="Idioma del libro") }}
+                                    {% if form.language.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.language.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="genre" class="form-label">{{ form.genre.label }}</label>
+                                    {{ form.genre(class="form-control", placeholder="Género del libro") }}
+                                    {% if form.genre.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.genre.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="publisher" class="form-label">{{ form.publisher.label }}</label>
+                            {{ form.publisher(class="form-control", placeholder="Nombre de la editorial") }}
+                            {% if form.publisher.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.publisher.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description(class="form-control", rows="5", placeholder="Descripción del libro") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Columna Derecha -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="cover_image" class="form-label">{{ form.cover_image.label }}</label>
+                            {{ form.cover_image(class="form-control") }}
+                            {% if form.cover_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.cover_image.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            {% if book and book.cover_image_path %}
+                                <div class="mt-2">
+                                    <p>Portada actual:</p>
+                                    <img src="{{ url_for('static', filename=book.cover_image_path) }}" class="img-fluid" alt="{{ book.title }}">
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="available_copies" class="form-label">{{ form.available_copies.label }}</label>
+                                    {{ form.available_copies(class="form-control") }}
+                                    {% if form.available_copies.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.available_copies.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="total_copies" class="form-label">{{ form.total_copies.label }}</label>
+                                    {{ form.total_copies(class="form-control") }}
+                                    {% if form.total_copies.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.total_copies.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

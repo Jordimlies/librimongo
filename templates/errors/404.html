@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}LibriMongo - Página No Encontrada{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="display-1">404</h1>
+    <p class="lead">Página No Encontrada</p>
+    <p>La página que estás buscando no existe o ha sido movida.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Volver al Inicio</a>
+</div>
+{% endblock %}

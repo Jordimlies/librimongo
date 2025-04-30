@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Reseñas - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Mis Reseñas</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Libros que He Reseñado</h5>
+            <span class="badge bg-primary">{{ reviews|length }} de {{ total_items }}</span>
+        </div>
+        <div class="card-body">
+            {% if reviews %}
+                <div class="list-group">
+                    {% for item in reviews %}
+                        <div class="list-group-item">
+                            <div class="row">
+                                <div class="col-md-2 mb-3 mb-md-0">
+                                    {% if item.book.cover_image_path %}
+                                        <img src="{{ url_for('static', filename=item.book.cover_image_path) }}" class="img-fluid" alt="{{ item.book.title }}">
+                                    {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <span class="text-muted">Sin Portada</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">
+                                            <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="text-decoration-none">
+                                                {{ item.book.title }}
+                                            </a>
+                                        </h5>
+                                        <small class="text-muted">{{ item.review.created_at.strftime('%Y-%m-%d') }}</small>
+                                    </div>
+                                    <h6 class="text-muted mb-3">{{ item.book.author }}</h6>
+                                    
+                                    <div class="mb-3">
+                                        {% for i in range(5) %}
+                                            {% if i < item.review.rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-2">{{ item.review.rating }}/5</span>
+                                    </div>
+                                    
+                                    {% if item.review.text %}
+                                        <p class="mb-3">{{ item.review.text }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="btn btn-sm btn-outline-primary">Editar Reseña</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Paginación -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Paginación de reseñas" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('user_routes.reviews', page=page-1, per_page=per_page) }}">Anterior</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Anterior</span>
+                                </li>
+                            {% endif %}
+                            
+                            {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('user_routes.reviews', page=p, per_page=per_page) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                            
+                            {% if page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('user_routes.reviews', page=page+1, per_page=per_page) }}">Siguiente</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Siguiente</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <div class="text-center text-muted">
+                        Mostrando {{ (page-1) * per_page + 1 }} a {{ min(page * per_page, total_items) }} de {{ total_items }} reseñas
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">¡Aún no tienes reseñas!</h5>
+                    <p>No has reseñado ningún libro todavía. Tus reseñas ayudan a otros lectores a descubrir grandes libros y mejoran nuestras recomendaciones para ti.</p>
+                    <hr>
+                    <div class="text-center">
+                        <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-primary">Explorar Libros para Reseñar</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Estadísticas de Reseñas -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Estadísticas de Reseñas</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="ratingDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="genreRatingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gráfico de distribución de calificaciones
+        const ratingCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+        new Chart(ratingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['1 Estrella', '2 Estrellas', '3 Estrellas', '4 Estrellas', '5 Estrellas'],
+                datasets: [{
+                    label: 'Número de Reseñas',
+                    data: [0, 1, 2, 3, 2],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(255, 205, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(54, 162, 235, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 159, 64)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(54, 162, 235)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Distribución de Calificaciones'
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de calificaciones por género
+        const genreCtx = document.getElementById('genreRatingChart').getContext('2d');
+        new Chart(genreCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Ficción', 'No Ficción', 'Ciencia Ficción', 'Misterio', 'Biografía'],
+                datasets: [{
+                    label: 'Calificación Promedio',
+                    data: [4.5, 3.5, 5.0, 4.0, 3.0],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(54, 162, 235)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Calificaciones por Género'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

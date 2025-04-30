@@ -1,0 +1,192 @@
+/* LibriMongo - Main Stylesheet */
+
+/* Global Styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Footer Styles */
+.footer {
+    margin-top: 2rem;
+}
+
+/* Card Styles */
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 500;
+}
+
+/* Authentication Pages */
+.auth-container {
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+/* Jumbotron (Bootstrap 5 replacement) */
+.jumbotron {
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    background-color: #e9ecef;
+    border-radius: 0.3rem;
+}
+
+/* Navbar active state */
+.navbar .nav-link.active {
+    font-weight: bold;
+}
+
+/* Book display */
+.book-cover {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Admin badge */
+.admin-badge {
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+/* Sidebar Filters */
+.sidebar-filters {
+    position: sticky;
+    top: 1rem;
+    z-index: 999;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar-filters {
+        position: static;
+    }
+}
+
+/* Feature Icons */
+.feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    font-size: 2rem;
+    border-radius: 50%;
+}
+
+/* Role-specific UI elements */
+.admin-section {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+}
+
+/* Book Grid */
+.book-grid .card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.book-grid .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Rating Stars */
+.rating-stars {
+    color: #ffc107;
+}
+
+.rating-stars .bi-star-fill,
+.rating-stars .bi-star-half,
+.rating-stars .bi-star {
+    margin-right: 0.125rem;
+}
+
+/* User Dashboard */
+.dashboard-stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.dashboard-stat-card i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Book Detail Page */
+.book-actions {
+    margin-top: 1rem;
+}
+
+.book-actions .btn {
+    margin-bottom: 0.5rem;
+}
+
+/* Reviews */
+.review-item {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 0;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.review-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+    .book-cover {
+        height: 180px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .book-cover {
+        height: 160px;
+    }
+}
+
+/* Accessibility Improvements */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .book-detail-print {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}

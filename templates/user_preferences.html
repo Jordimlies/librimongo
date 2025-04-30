@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Preferencias de Lectura - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Actualizar Preferencias de Lectura</h1>
+    <form method="POST" action="{{ url_for('user_routes.preferences') }}">
+        {{ form.hidden_tag() }}
+        
+        <div class="mb-3">
+            {{ form.preferred_genres.label(class="form-label") }}
+            {{ form.preferred_genres(class="form-select", multiple=True) }}
+            {% if form.preferred_genres.errors %}
+                <div class="text-danger">
+                    {% for error in form.preferred_genres.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+    </form>
+</div>
+{% endblock %}

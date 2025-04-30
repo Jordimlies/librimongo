@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo de Libros - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Filtros de Barra Lateral -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card mb-4 sticky-top" style="top: 1rem; z-index: 999;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form id="sidebarFilterForm" method="GET" action="{{ url_for('book_routes.book_list') }}">
+                        <!-- Búsqueda -->
+                        <div class="mb-3">
+                            <label for="query" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="query" name="query" value="{{ request.args.get('query', '') }}" placeholder="Título, autor...">
+                        </div>
+                        
+                        <!-- Filtro de Género -->
+                        <div class="mb-3">
+                            <label for="genre" class="form-label">Género</label>
+                            <select class="form-select" id="genre" name="genre">
+                                <option value="">Todos los Géneros</option>
+                                {% for genre_option in form.genre.choices[1:] %}
+                                <option value="{{ genre_option[0] }}" {% if request.args.get('genre') == genre_option[0] %}selected{% endif %}>
+                                    {{ genre_option[1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Filtro de Autor -->
+                        <div class="mb-3">
+                            <label for="author" class="form-label">Autor</label>
+                            <input type="text" class="form-control" id="author" name="author" value="{{ request.args.get('author', '') }}" placeholder="Nombre del autor">
+                        </div>
+                        
+                        <!-- Filtro de Idioma -->
+                        <div class="mb-3">
+                            <label for="language" class="form-label">Idioma</label>
+                            <select class="form-select" id="language" name="language">
+                                <option value="">Todos los Idiomas</option>
+                                {% for lang_option in form.language.choices[1:] %}
+                                <option value="{{ lang_option[0] }}" {% if request.args.get('language') == lang_option[0] %}selected{% endif %}>
+                                    {{ lang_option[1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Filtro de Rango de Años -->
+                        <div class="mb-3">
+                            <label class="form-label">Año de Publicación</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="year_from" name="year_from" 
+                                           placeholder="Desde" value="{{ request.args.get('year_from', '') }}">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="year_to" name="year_to" 
+                                           placeholder="Hasta" value="{{ request.args.get('year_to', '') }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Filtro de Disponibilidad -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="available" name="available" value="true" 
+                                   {% if request.args.get('available') %}checked{% endif %}>
+                            <label class="form-check-label" for="available">Solo Disponibles</label>
+                        </div>
+                        
+                        <!-- Opciones de Orden -->
+                        <div class="mb-3">
+                            <label for="sort_by" class="form-label">Ordenar Por</label>
+                            <select class="form-select" id="sort_by" name="sort_by">
+                                {% for option in form.sort_by.choices %}
+                                <option value="{{ option[0] }}" {% if request.args.get('sort_by') == option[0] %}selected{% endif %}>
+                                    {{ option[1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sort_order" class="form-label">Orden</label>
+                            <select class="form-select" id="sort_order" name="sort_order">
+                                {% for option in form.sort_order.choices %}
+                                <option value="{{ option[0] }}" {% if request.args.get('sort_order') == option[0] %}selected{% endif %}>
+                                    {{ option[1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Botones de Filtro -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                            <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-outline-secondary">Restablecer Filtros</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido Principal -->
+        <div class="col-md-9 col-lg-10">
+            <h1 class="mb-4">Catálogo de Libros</h1>
+            
+            <!-- Grid de Libros -->
+            <div class="row">
+                {% if books %}
+                    {% for book in books %}
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
+                            <div class="card h-100">
+                                {% if book.cover_image_path %}
+                                    <img src="{{ url_for('static', filename=book.cover_image_path) }}" class="card-img-top book-cover" alt="{{ book.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center book-cover">
+                                        <span class="text-muted">Sin Portada</span>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ book.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                                    <p class="card-text">
+                                        {% if book.genre %}
+                                            <a href="{{ url_for('book_routes.book_list', genre=book.genre) }}" class="badge bg-secondary text-decoration-none">{{ book.genre }}</a>
+                                        {% endif %}
+                                        {% if book.year %}
+                                            <span class="badge bg-light text-dark">{{ book.year }}</span>
+                                        {% endif %}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="btn btn-sm btn-primary">Ver Detalles</a>
+                                        {% if book.is_available %}
+                                            <span class="badge bg-success">Disponible</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No Disponible</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No se encontraron libros que coincidan con tus criterios.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Paginación -->
+            {% if total_pages > 1 %}
+                <nav aria-label="Paginación de libros" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('book_routes.book_list', page=page-1, per_page=per_page, query=request.args.get('query'), genre=request.args.get('genre'), author=request.args.get('author'), language=request.args.get('language'), year_from=request.args.get('year_from'), year_to=request.args.get('year_to'), available=request.args.get('available'), sort_by=request.args.get('sort_by'), sort_order=request.args.get('sort_order')) }}">Anterior</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Anterior</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for p in page_range %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('book_routes.book_list', page=p, per_page=per_page, query=request.args.get('query'), genre=request.args.get('genre'), author=request.args.get('author'), language=request.args.get('language'), year_from=request.args.get('year_from'), year_to=request.args.get('year_to'), available=request.args.get('available'), sort_by=request.args.get('sort_by'), sort_order=request.args.get('sort_order')) }}">{{ p }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('book_routes.book_list', page=page+1, per_page=per_page, query=request.args.get('query'), genre=request.args.get('genre'), author=request.args.get('author'), language=request.args.get('language'), year_from=request.args.get('year_from'), year_to=request.args.get('year_to'), available=request.args.get('available'), sort_by=request.args.get('sort_by'), sort_order=request.args.get('sort_order')) }}">Siguiente</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Siguiente</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <div class="text-center text-muted">
+                    Mostrando {{ start_item }} a {{ end_item }} de {{ total_items }} libros
+                </div>
+            {% endif %}
+            
+            {% if current_user.is_admin %}
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('book_routes.new_book') }}" class="btn btn-success">Agregar Nuevo Libro</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit form when select fields change
+        const autoSubmitFields = document.querySelectorAll('#sidebarFilterForm select, #sidebarFilterForm input[type="checkbox"]');
+        autoSubmitFields.forEach(field => {
+            field.addEventListener('change', function() {
+                document.getElementById('sidebarFilterForm').submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

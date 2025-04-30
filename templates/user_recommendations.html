@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Recomendaciones de Libros - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Recomendaciones Personalizadas de Libros</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Cómo Funcionan las Recomendaciones</h5>
+        </div>
+        <div class="card-body">
+            <p>Nuestro sistema de recomendaciones analiza tu historial de lectura, reseñas y preferencias para sugerir libros que podrían interesarte. ¡Cuanto más interactúes con la biblioteca, mejores serán nuestras recomendaciones!</p>
+            
+            <div class="alert alert-info">
+                <h6 class="alert-heading">Factores de Recomendación:</h6>
+                <ul class="mb-0">
+                    <li>Libros en tus géneros favoritos</li>
+                    <li>Libros de autores que te han gustado</li>
+                    <li>Libros populares entre usuarios con gustos similares</li>
+                    <li>Libros con altas calificaciones en la biblioteca</li>
+                </ul>
+            </div>
+            
+            <div class="text-center">
+                <a href="{{ url_for('user_routes.preferences') }}" class="btn btn-primary">Actualizar Mis Preferencias</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recomendaciones -->
+    <div class="row">
+        {% if recommendations %}
+            {% for book in recommendations %}
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        {% if book.cover_image_path %}
+                            <img src="{{ url_for('static', filename=book.cover_image_path) }}" class="card-img-top" alt="{{ book.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <span class="text-muted">Sin Portada</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                            <p class="card-text">
+                                {% if book.genre %}
+                                    <span class="badge bg-secondary">{{ book.genre }}</span>
+                                {% endif %}
+                                {% if book.year %}
+                                    <span class="badge bg-light text-dark">{{ book.year }}</span>
+                                {% endif %}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="btn btn-sm btn-primary">Ver Detalles</a>
+                                {% if book.is_available %}
+                                    <span class="badge bg-success">Disponible</span>
+                                {% else %}
+                                    <span class="badge bg-danger">No Disponible</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">¡Aún no hay recomendaciones!</h5>
+                    <p>Necesitamos más información sobre tus preferencias de lectura para ofrecerte recomendaciones personalizadas. Prueba estas acciones:</p>
+                    <ul>
+                        <li>Pedir prestados y leer algunos libros</li>
+                        <li>Calificar libros que hayas leído</li>
+                        <li>Actualizar tus preferencias de lectura</li>
+                    </ul>
+                    <hr>
+                    <div class="text-center">
+                        <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-primary">Explorar Libros</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Configuración de Recomendaciones -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Configuración de Recomendaciones</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('user_routes.recommendations') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="limit" class="form-label">Número de recomendaciones a mostrar</label>
+                    <select name="limit" id="limit" class="form-select">
+                        <option value="5" {% if limit == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

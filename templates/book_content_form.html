@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Contenido: {{ book.title }} - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Editar Contenido del Libro: {{ book.title }}</h1>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Contenido del Libro</h5>
+            <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="btn btn-sm btn-outline-primary">Volver a Detalles del Libro</a>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label for="content" class="form-label">{{ form.content.label }}</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary" id="expandBtn">Expandir Editor</button>
+                            <button type="button" class="btn btn-outline-secondary" id="previewBtn">Vista Previa</button>
+                        </div>
+                    </div>
+                    {{ form.content(class="form-control", rows="20", id="contentEditor") }}
+                    {% if form.content.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.content.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div id="contentPreview" class="mt-3 p-3 border rounded" style="display: none; font-family: 'Georgia', serif; line-height: 1.8; white-space: pre-wrap;"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Consejos para Formatear el Contenido</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Formato Básico</h6>
+                    <ul>
+                        <li>Usa líneas en blanco para separar párrafos</li>
+                        <li>Usa # para títulos de capítulos (por ejemplo, # Capítulo 1)</li>
+                        <li>Usa ## para encabezados de secciones</li>
+                        <li>Usa *texto* para texto en cursiva</li>
+                        <li>Usa **texto** para texto en negrita</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Formato Avanzado</h6>
+                    <ul>
+                        <li>Usa > para citas en bloque</li>
+                        <li>Usa --- para líneas horizontales</li>
+                        <li>Usa 1. 2. 3. para listas numeradas</li>
+                        <li>Usa - para puntos de lista</li>
+                        <li>Usa [texto](url) para enlaces</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contentEditor = document.getElementById('contentEditor');
+        const contentPreview = document.getElementById('contentPreview');
+        const expandBtn = document.getElementById('expandBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        
+        // Expandir editor
+        expandBtn.addEventListener('click', function() {
+            if (contentEditor.rows === 20) {
+                contentEditor.rows = 40;
+                expandBtn.textContent = 'Colapsar Editor';
+            } else {
+                contentEditor.rows = 20;
+                expandBtn.textContent = 'Expandir Editor';
+            }
+        });
+        
+        // Vista previa del contenido
+        previewBtn.addEventListener('click', function() {
+            if (contentPreview.style.display === 'none') {
+                contentPreview.textContent = contentEditor.value;
+                contentPreview.style.display = 'block';
+                previewBtn.textContent = 'Ocultar Vista Previa';
+            } else {
+                contentPreview.style.display = 'none';
+                previewBtn.textContent = 'Vista Previa';
+            }
+        });
+        
+        // Guardado automático en almacenamiento local
+        let typingTimer;
+        const doneTypingInterval = 1000; // 1 segundo
+        
+        contentEditor.addEventListener('keyup', function() {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(saveToLocalStorage, doneTypingInterval);
+        });
+        
+        contentEditor.addEventListener('keydown', function() {
+            clearTimeout(typingTimer);
+        });
+        
+        function saveToLocalStorage() {
+            localStorage.setItem('bookContent_{{ book.id }}', contentEditor.value);
+            console.log('Contenido guardado automáticamente');
+        }
+        
+        // Cargar desde almacenamiento local si está disponible
+        const savedContent = localStorage.getItem('bookContent_{{ book.id }}');
+        if (savedContent && contentEditor.value.trim() === '') {
+            contentEditor.value = savedContent;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Panel - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-3">Bienvenido, {{ current_user.first_name or current_user.username }}</h1>
+            <p class="lead">Tu panel personal de biblioteca</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if current_user.is_admin %}
+                <div class="alert alert-info d-inline-block">
+                    <i class="bi bi-shield-check me-2"></i>Tienes privilegios de administrador
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Préstamos Activos</h5>
+                    <p>{{ active_loans }}</p>
+                    <p class="card-text display-6">{{ active_loans }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-clock-history text-success" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Libros Leídos</h5>
+                    <p class="card-text display-6">{{ statistics.total_books_read }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-star text-warning" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Reseñas</h5>
+                    <p class="card-text display-6">{{ statistics.total_reviews }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Atrasados</h5>
+                    <p class="card-text display-6">{{ overdue_loans|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna Izquierda -->
+        <div class="col-lg-8">
+            <!-- Préstamos Activos -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Préstamos Activos</h5>
+                    <a href="{{ url_for('user_routes.loans') }}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                </div>
+                <div class="card-body">
+                    {% if active_loans %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Libro</th>
+                                        <th>Fecha de Préstamo</th>
+                                        <th>Fecha de Devolución</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in active_loans[:5] %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="text-decoration-none">
+                                                    {{ item.book.title }}
+                                                </a>
+                                            </td>
+                                            <td>{{ item.loan.loan_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ item.loan.due_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                {% if item.is_overdue %}
+                                                    <span class="badge bg-danger">Atrasado</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Activo</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="{{ url_for('book_routes.return_book_route', loan_id=item.loan.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Devolver</button>
+                                                </form>
+                                                <a href="{{ url_for('book_routes.read_book', book_id=item.book.id) }}" class="btn btn-sm btn-outline-secondary">Leer</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if active_loans|length > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('user_routes.loans') }}" class="btn btn-outline-primary">Ver Todos los {{ active_loans|length }} Préstamos</a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            No tienes préstamos activos.
+                            <a href="{{ url_for('book_routes.book_list') }}" class="alert-link">Explora libros</a> para pedir prestados.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Historial de Lectura -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Historial de Lectura Reciente</h5>
+                    <a href="{{ url_for('user_routes.reading_history') }}" class="btn btn-sm btn-outline-primary">Ver Todo</a>
+                </div>
+                <div class="card-body">
+                    <div id="readingHistoryChart" style="height: 250px;"></div>
+                </div>
+            </div>
+
+            {% if current_user.is_admin %}
+            <!-- Sección de Administrador -->
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Acciones Rápidas de Administrador</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('book_routes.new_book') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Agregar Nuevo Libro
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-outline-primary">
+                                    <i class="bi bi-people me-2"></i>Gestionar Usuarios
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-outline-primary">
+                                    <i class="bi bi-graph-up me-2"></i>Ver Reportes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna Derecha -->
+        <div class="col-lg-4">
+            <!-- Alerta de Préstamos Atrasados -->
+            {% if overdue_loans %}
+                <div class="alert alert-danger mb-4">
+                    <h5><i class="bi bi-exclamation-triangle me-2"></i>Libros Atrasados</h5>
+                    <ul class="list-unstyled mb-0">
+                        {% for item in overdue_loans %}
+                            <li class="mb-2">
+                                <strong>{{ item.book.title }}</strong><br>
+                                <small>Fecha de Devolución: {{ item.loan.due_date.strftime('%Y-%m-%d') }} ({{ item.days_overdue }} días atrasado)</small><br>
+                                <form method="POST" action="{{ url_for('book_routes.return_book_route', loan_id=item.loan.id) }}" class="mt-1">
+                                    <button type="submit" class="btn btn-sm btn-danger">Devolver Ahora</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Recomendaciones -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recomendado para Ti</h5>
+                    <a href="{{ url_for('user_routes.recommendations') }}" class="btn btn-sm btn-outline-primary">Ver Todo</a>
+                </div>
+                <div class="card-body">
+                    {% if recommendations %}
+                        <div class="list-group">
+                            {% for book in recommendations %}
+                                <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100">
+                                        {% if book.cover_image_path %}
+                                            <img src="{{ url_for('static', filename=book.cover_image_path) }}" alt="{{ book.title }}" class="me-3" style="width: 50px; height: 75px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 75px;">
+                                                <span class="text-muted small">Sin Portada</span>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-1">{{ book.title }}</h6>
+                                            <p class="mb-1 text-muted small">{{ book.author }}</p>
+                                            {% if book.genre %}
+                                                <span class="badge bg-secondary">{{ book.genre }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Aún no hay recomendaciones disponibles. Sigue leyendo libros para obtener recomendaciones personalizadas.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estadísticas de Lectura -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Estadísticas de Lectura</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total de Libros Leídos
+                            <span class="badge bg-primary rounded-pill">{{ statistics.total_books_read }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Reseñas Escritas
+                            <span class="badge bg-primary rounded-pill">{{ statistics.total_reviews }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Calificación Promedio
+                            <span class="badge bg-primary rounded-pill">{{ statistics.average_rating|round(1) }}</span>
+                        </li>
+                    </ul>
+                    {% if statistics.favorite_genres %}
+                        <div class="mt-3">
+                            <h6>Géneros Favoritos:</h6>
+                            <div>
+                                {% for genre in statistics.favorite_genres %}
+                                    <a href="{{ url_for('book_routes.book_list', genre=genre) }}" class="badge bg-secondary text-decoration-none me-1">{{ genre }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gráfico de historial de lectura
+        const ctx = document.getElementById('readingHistoryChart').getContext('2d');
+        
+        // Extraer datos de estadísticas
+        const monthlyReads = {{ statistics.monthly_reads|tojson }};
+        const labels = monthlyReads.map(item => {
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return `${monthNames[item.month-1]} ${item.year}`;
+        });
+        const data = monthlyReads.map(item => item.count);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Libros Leídos',
+                    data: data,
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

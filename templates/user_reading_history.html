@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Lectura - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Mi Historial de Lectura</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Libros que He Leído</h5>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="includeActiveSwitch" {% if include_active %}checked{% endif %}>
+                <label class="form-check-label" for="includeActiveSwitch">Incluir préstamos activos</label>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if history_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Libro</th>
+                                <th>Autor</th>
+                                <th>Prestado</th>
+                                <th>Devuelto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history_items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="text-decoration-none">
+                                            {{ item.book.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ item.book.author }}</td>
+                                    <td>{{ item.loan.loan_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if item.loan.is_returned %}
+                                            {{ item.loan.return_date.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.loan.is_returned %}
+                                            <span class="badge bg-secondary">Devuelto</span>
+                                        {% elif item.loan.due_date < now() %}
+                                            <span class="badge bg-danger">Atrasado</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not item.loan.is_returned %}
+                                            <form method="POST" action="{{ url_for('book_routes.return_book_route', loan_id=item.loan.id, next=url_for('user_routes.reading_history')) }}">
+                                                <button type="submit" class="btn btn-sm btn-primary">Devolver</button>
+                                            </form>
+                                        {% else %}
+                                            <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="btn btn-sm btn-outline-primary">Ver Libro</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginación -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Paginación del historial de lectura" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('user_routes.reading_history', page=page-1, per_page=per_page, include_active=include_active) }}">Anterior</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Anterior</span>
+                                </li>
+                            {% endif %}
+                            
+                            {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('user_routes.reading_history', page=p, per_page=per_page, include_active=include_active) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                            
+                            {% if page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('user_routes.reading_history', page=page+1, per_page=per_page, include_active=include_active) }}">Siguiente</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Siguiente</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <div class="text-center text-muted">
+                        Mostrando {{ (page-1) * per_page + 1 }} a {{ min(page * per_page, total_items) }} de {{ total_items }} elementos
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">¡Aún no tienes historial de lectura!</h5>
+                    <p>No has pedido ningún libro prestado todavía. Comienza a explorar nuestra colección para construir tu historial de lectura.</p>
+                    <hr>
+                    <div class="text-center">
+                        <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-primary">Explorar Libros</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Estadísticas de Lectura -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Estadísticas de Lectura</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="genreChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Alternar préstamos activos
+        const includeActiveSwitch = document.getElementById('includeActiveSwitch');
+        includeActiveSwitch.addEventListener('change', function() {
+            window.location.href = "{{ url_for('user_routes.reading_history') }}?include_active=" + this.checked;
+        });
+        
+        // Datos de ejemplo para gráficos - en una aplicación real, esto vendría del backend
+        // Gráfico de géneros
+        const genreCtx = document.getElementById('genreChart').getContext('2d');
+        new Chart(genreCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Ficción', 'No Ficción', 'Ciencia Ficción', 'Misterio', 'Otros'],
+                datasets: [{
+                    data: [5, 3, 2, 1, 1],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Libros por Género'
+                    },
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de línea temporal
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Libros Leídos',
+                    data: [1, 2, 0, 3, 1, 2],
+                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Línea de Tiempo de Lectura'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

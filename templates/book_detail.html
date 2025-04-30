@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Portada del Libro e Información Básica -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                {% if book.cover_image_path %}
+                    <img src="{{ url_for('static', filename=book.cover_image_path) }}" class="card-img-top" alt="{{ book.title }}">
+                {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <span class="text-muted">Sin Portada</span>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ book.title }}</h5>
+                    <h6 class="card-subtitle mb-3 text-muted">{{ book.author }}</h6>
+                    
+                    <!-- Mostrar Calificación -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                {% for i in range(5) %}
+                                    {% if i < average_rating|int %}
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    {% elif i < average_rating|round(0, 'ceil') %}
+                                        <i class="bi bi-star-half text-warning"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span>{{ average_rating|round(1) }} / 5</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Disponibilidad y Acciones -->
+                    <div class="mb-3">
+                        {% if book.available_copies > 0 %}
+                            <span class="badge bg-success mb-2">{{ book.available_copies }} de {{ book.total_copies }} copias disponibles</span>
+                        {% else %}
+                            <span class="badge bg-danger mb-2">No hay copias disponibles</span>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            {% if current_user.is_authenticated %}
+                                {% if book.available_copies > 0 %}
+                                    <form method="POST" action="{{ url_for('book_routes.lend_book_route', book_id=book.id) }}">
+                                        <button type="submit" class="btn btn-primary w-100">Pedir Prestado</button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-primary w-100" disabled>No Disponible</button>
+                                {% endif %}
+                                <a href="{{ url_for('book_routes.read_book', book_id=book.id) }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-book me-1"></i> Leer Vista Previa
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('auth_routes.login_route', next=request.path) }}" class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Inicia Sesión para Pedir Prestado
+                                </a>
+                                <a href="{{ url_for('auth_routes.login_route', next=request.path) }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-book me-1"></i> Inicia Sesión para Leer
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acciones de Administrador -->
+            {% if current_user.is_admin %}
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Acciones de Administrador</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('book_routes.edit_book', book_id=book.id) }}" class="btn btn-warning">
+                                <i class="bi bi-pencil me-1"></i> Editar Libro
+                            </a>
+                            <a href="{{ url_for('book_routes.edit_book_content', book_id=book.id) }}" class="btn btn-info">
+                                <i class="bi bi-file-text me-1"></i> Editar Contenido
+                            </a>
+                            <form method="POST" action="{{ url_for('book_routes.delete_book_route', book_id=book.id) }}" 
+                                  onsubmit="return confirm('¿Estás seguro de que deseas eliminar este libro? Esta acción no se puede deshacer.');">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-trash me-1"></i> Eliminar Libro
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Libros Similares -->
+            {% if recommendations %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">También te puede interesar</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for book in recommendations %}
+                                <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex">
+                                        {% if book.cover_image_path %}
+                                            <img src="{{ url_for('static', filename=book.cover_image_path) }}" alt="{{ book.title }}" 
+                                                 style="width: 50px; height: 75px; object-fit: cover;" class="me-3">
+                                        {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 75px;">
+                                                <span class="text-muted small">Sin Portada</span>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-1">{{ book.title }}</h6>
+                                            <p class="mb-1 text-muted small">{{ book.author }}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Detalles del Libro -->
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('book_routes.book_list') }}">Libros</a></li>
+                    {% if book.genre %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('book_routes.book_list', genre=book.genre) }}">{{ book.genre }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Detalles del Libro</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ book.description|default('No hay descripción disponible.') }}</p>
+                    
+                    <table class="table">
+                        <tbody>
+                            {% if book.genre %}
+                                <tr>
+                                    <th scope="row">Género</th>
+                                    <td>
+                                        <a href="{{ url_for('book_routes.book_list', genre=book.genre) }}" class="text-decoration-none">
+                                            <span class="badge bg-secondary">{{ book.genre }}</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if book.year %}
+                                <tr>
+                                    <th scope="row">Año de Publicación</th>
+                                    <td>
+                                        <a href="{{ url_for('book_routes.book_list', year_from=book.year, year_to=book.year) }}" class="text-decoration-none">
+                                            {{ book.year }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if book.publisher %}
+                                <tr>
+                                    <th scope="row">Editorial</th>
+                                    <td>{{ book.publisher }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if book.language %}
+                                <tr>
+                                    <th scope="row">Idioma</th>
+                                    <td>
+                                        <a href="{{ url_for('book_routes.book_list', language=book.language) }}" class="text-decoration-none">
+                                            {{ book.language }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if book.isbn %}
+                                <tr>
+                                    <th scope="row">ISBN</th>
+                                    <td>{{ book.isbn }}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Sección de Reseñas -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Reseñas</h5>
+                    <span class="badge bg-primary">{{ reviews|length }} reseñas</span>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_authenticated %}
+                        <div class="mb-4">
+                            <h6>Escribe una Reseña</h6>
+                            <form method="POST" action="{{ url_for('book_routes.add_book_review', book_id=book.id) }}">
+                                {{ review_form.hidden_tag() }}
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label">{{ review_form.rating.label }}</label>
+                                    <div class="rating-input">
+                                        {% for i in range(1, 6) %}
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating{{ i }}" value="{{ i }}"
+                                                       {% if review_form.rating.data == i %}checked{% endif %}>
+                                                <label class="form-check-label" for="rating{{ i }}">{{ i }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="text" class="form-label">{{ review_form.text.label }}</label>
+                                    {{ review_form.text(class="form-control", rows="3", placeholder="Comparte tus pensamientos sobre este libro...") }}
+                                </div>
+                                {{ review_form.submit(class="btn btn-primary") }}
+                            </form>
+                        </div>
+                    {% endif %}
+                    
+                    {% if reviews %}
+                        <div class="list-group">
+                            {% for review in reviews %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">
+                                            {% if current_user.is_admin %}
+                                                Usuario #{{ review.user_id }}
+                                            {% else %}
+                                                {% if review.user_id == current_user.id %}
+                                                    Tú
+                                                {% else %}
+                                                    Lector Anónimo
+                                                {% endif %}
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d') }}</small>
+                                    </div>
+                                    <div class="mb-2">
+                                        {% for i in range(5) %}
+                                            {% if i < review.rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% if review.text %}
+                                        <p class="mb-1">{{ review.text }}</p>
+                                    {% endif %}
+
+                                    {% if current_user.is_authenticated and review.user_id == current_user.id %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Esta es tu reseña</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">Aún no hay reseñas. ¡Sé el primero en reseñar este libro!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    .rating-input {
+        display: flex;
+        align-items: center;
+    }
+    .rating-input .form-check-inline {
+        margin-right: 1rem;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,6 @@
+__pycache__
+docker_data
+config/.env
+data
+static/covers
+*.log

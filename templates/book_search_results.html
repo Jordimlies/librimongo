@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados de Búsqueda: {{ query }} - LibriMongo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Resultados de Búsqueda para "{{ query }}"</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Se encontraron {{ total_items }} resultados</h5>
+            <a href="{{ url_for('book_routes.book_list') }}" class="btn btn-sm btn-outline-primary">Volver al Catálogo de Libros</a>
+        </div>
+        <div class="card-body">
+            <!-- Formulario de Búsqueda -->
+            <form method="GET" action="{{ url_for('book_routes.search') }}" class="mb-4">
+                <div class="input-group">
+                    <input type="text" name="query" class="form-control" placeholder="Buscar por título, autor o descripción" value="{{ query }}">
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </div>
+            </form>
+            
+            {% if books %}
+                <!-- Grid de Libros -->
+                <div class="row">
+                    {% for book in books %}
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card h-100">
+                                {% if book.cover_image_path %}
+                                    <img src="{{ url_for('static', filename=book.cover_image_path) }}" class="card-img-top" alt="{{ book.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <span class="text-muted">Sin Portada</span>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ book.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                                    <p class="card-text">
+                                        {% if book.genre %}
+                                            <span class="badge bg-secondary">{{ book.genre }}</span>
+                                        {% endif %}
+                                        {% if book.year %}
+                                            <span class="badge bg-light text-dark">{{ book.year }}</span>
+                                        {% endif %}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{{ url_for('book_routes.book_detail', book_id=book.id) }}" class="btn btn-sm btn-primary">Ver Detalles</a>
+                                        {% if book.is_available %}
+                                            <span class="badge bg-success">Disponible</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No Disponible</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Paginación -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Paginación de resultados de búsqueda" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('book_routes.search', query=query, page=page-1, per_page=per_page) }}">Anterior</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Anterior</span>
+                                </li>
+                            {% endif %}
+                            
+                            {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('book_routes.search', query=query, page=p, per_page=per_page) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                            
+                            {% if page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('book_routes.search', query=query, page=page+1, per_page=per_page) }}">Siguiente</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Siguiente</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <div class="text-center text-muted">
+                        Mostrando {{ (page-1) * per_page + 1 }} a {{ min(page * per_page, total_items) }} de {{ total_items }} resultados
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">No se encontraron resultados</h5>
+                    <p>No pudimos encontrar libros que coincidan con tu búsqueda "{{ query }}".</p>
+                    <hr>
+                    <p class="mb-0">Intenta usar palabras clave diferentes o visita nuestro <a href="{{ url_for('book_routes.book_list') }}">catálogo de libros</a>.</p>
+                </div>
+                
+                <!-- Consejos de Búsqueda -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Consejos para la Búsqueda</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Usa palabras clave simples (por ejemplo, "fantasía" en lugar de "novelas de fantasía")</li>
+                            <li>Revisa la ortografía</li>
+                            <li>Intenta buscar por nombre del autor o título del libro</li>
+                            <li>Usa los filtros en la página del catálogo de libros para resultados más específicos</li>
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Búsqueda Avanzada -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Búsqueda Avanzada</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('book_routes.book_list') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="title" class="form-label">Título</label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Título del libro">
+                </div>
+                <div class="col-md-6">
+                    <label for="author" class="form-label">Autor</label>
+                    <input type="text" class="form-control" id="author" name="author" placeholder="Nombre del autor">
+                </div>
+                <div class="col-md-4">
+                    <label for="genre" class="form-label">Género</label>
+                    <select class="form-select" id="genre" name="genre">
+                        <option value="">Todos los Géneros</option>
+                        <!-- Los géneros se poblarían dinámicamente -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="language" class="form-label">Idioma</label>
+                    <select class="form-select" id="language" name="language">
+                        <option value="">Todos los Idiomas</option>
+                        <!-- Los idiomas se poblarían dinámicamente -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="year" class="form-label">Año de Publicación</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="year_from" name="year_from" placeholder="Desde">
+                        <input type="number" class="form-control" id="year_to" name="year_to" placeholder="Hasta">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="available" name="available" value="true">
+                        <label class="form-check-label" for="available">
+                            Solo libros disponibles
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

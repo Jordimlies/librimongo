@@ -1,0 +1,53 @@
+networks:
+  librimongo-network:
+    driver: bridge
+services:
+  mariadb:
+    container_name: librimongo-mariadb
+    environment:
+      MYSQL_DATABASE: librimongo
+      MYSQL_PASSWORD: librimongo
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: librimongo
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+      - CMD
+      - mysqladmin
+      - ping
+      - -h
+      - localhost
+      - -u
+      - root
+      - -prootpassword
+      timeout: 5s
+    image: mariadb:10.11
+    networks:
+    - librimongo-network
+    ports:
+    - 3306:3306
+    restart: unless-stopped
+    volumes:
+    - /Users/ganso/Downloads/librimo/docker_data/mariadb:/var/lib/mysql
+  mongodb:
+    command: mongod --bind_ip_all
+    container_name: librimongo-mongodb
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+      - CMD
+      - mongosh
+      - --eval
+      - db.adminCommand('ping')
+      timeout: 5s
+    image: mongo:6.0
+    networks:
+    - librimongo-network
+    ports:
+    - 27017:27017
+    restart: unless-stopped
+    volumes:
+    - /Users/ganso/Downloads/librimo/docker_data/mongodb:/data/db
+version: '3'
