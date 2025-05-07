@@ -8,7 +8,7 @@ from models.mariadb_models import User, Loan, Book, db
 from models.mongodb_models import Review, LoanHistory
 from services.recommendation_service import get_recommendations_for_user, track_user_interaction
 from utils.helpers import log_activity
-from datetime import datetime
+from datetime import datetime, timezone
 
 def get_user_by_id(user_id):
     """
@@ -175,8 +175,8 @@ def get_user_active_loans(user_id):
                 'book': book,
                 'is_overdue': loan.is_overdue
             })
-
-    return active_loans
+    print(f"Active loans for user {user_id}: {active_loans} (type: {type(active_loans)})")  # Depuración
+    return active_loans or []
 
 def get_user_reading_preferences(user_id):
     """
@@ -269,7 +269,7 @@ def get_overdue_loans(user_id):
     Returns:
         list: Overdue loans with book details
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     loans = Loan.query.filter(
         Loan.user_id == user_id,
         Loan.is_returned == False,
@@ -310,7 +310,7 @@ def get_user_statistics(user_id):
     avg_rating = sum(ratings) / len(ratings) if ratings else 0
     
     # Calculate books read per month (last 6 months)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     months = {}
     for i in range(6):
         month = now.month - i

@@ -25,8 +25,7 @@
                 <div class="card-body">
                     <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
                     <h5 class="card-title mt-2">Préstamos Activos</h5>
-                    <p>{{ active_loans }}</p>
-                    <p class="card-text display-6">{{ active_loans }}</p>
+                    <p class="card-text display-6">{{ active_loans_count }}</p>
                 </div>
             </div>
         </div>
@@ -69,7 +68,7 @@
                     <a href="{{ url_for('user_routes.loans') }}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
                 </div>
                 <div class="card-body">
-                    {% if active_loans %}
+                    {% if active_loans is iterable and active_loans|length > 0 %}
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -111,7 +110,7 @@
                         </div>
                         {% if active_loans|length > 5 %}
                             <div class="text-center mt-3">
-                                <a href="{{ url_for('user_routes.loans') }}" class="btn btn-outline-primary">Ver Todos los {{ active_loans|length }} Préstamos</a>
+                                <a href="{{ url_for('user_routes.loans') }}" class="btn btn-outline-primary">Ver Todos los {{ active_loans_count|length }} Préstamos</a>
                             </div>
                         {% endif %}
                     {% else %}

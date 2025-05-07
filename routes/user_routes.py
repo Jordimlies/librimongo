@@ -161,12 +161,21 @@ def reviews():
 @user_bp.route('/loans')
 @login_required
 def loans():
-    active_loans = get_user_active_loans(current_user.id)  # ✅ esto debe ser una LISTA
+    # Obtener préstamos activos y asegurarse de que sea una lista
+    active_loans = get_user_active_loans(current_user.id)
     overdue_loans = get_overdue_loans(current_user.id)
+    
+    # Obtener recomendaciones para el usuario
+    from services.recommendation_service import get_recommendations_for_user
+    recommendations = get_recommendations_for_user(current_user.id, limit=5)
+    
+    # Obtener estadísticas del usuario
+    from services.user_service import get_user_statistics
+    statistics = get_user_statistics(current_user.id)
 
     return render_template(
         'user_dashboard.html',
-        active_loans=list(active_loans),  # 👈 Esto fuerza la conversión a lista
+        active_loans=active_loans,  # Ya es una lista desde get_user_active_loans
         overdue_loans=overdue_loans,
         recommendations=recommendations,
         statistics=statistics
@@ -204,16 +213,23 @@ def preferences():
         form.preferred_genres.data = user_preferences.get('favorite_genres', [])
     
     if form.validate_on_submit():
+        # Debug: Print submitted data
+        print(f"Submitted genres: {form.preferred_genres.data}")
+        print(f"Submitted authors: {request.form.get('preferred_authors')}")
+        print(f"Submitted frequency: {request.form.get('reading_frequency')}")
+        
         success = update_user_preferences(
             current_user.id,
-            preferred_genres=form.preferred_genres.data
+            preferred_genres=form.preferred_genres.data,
+            preferred_authors=request.form.get('preferred_authors', '').split(','),
+            reading_frequency=request.form.get('reading_frequency')
         )
         
         if success:
-            flash('Preferences updated successfully.', 'success')
+            flash('Preferencias actualizadas correctamente.', 'success')
             return redirect(url_for('user_routes.profile'))
         else:
-            flash('Error updating preferences.', 'danger')
+            flash('Error al actualizar las preferencias.', 'danger')
     
     return render_template(
         'user_preferences.html',
@@ -265,6 +281,9 @@ def dashboard():
     # Get active loans
     active_loans = get_user_active_loans(current_user.id)
     
+        # Depuración: Verifica el valor de active_loans
+    print(f"active_loans: {active_loans} (type: {type(active_loans)})")
+    
     # Get overdue loans
     overdue_loans = get_overdue_loans(current_user.id)
     
@@ -273,10 +292,10 @@ def dashboard():
     
     # Get reading statistics
     statistics = get_user_statistics(current_user.id)
-    
+
     return render_template(
         'user_dashboard.html',
-        active_loans=active_loans,
+        active_loans=len(active_loans),
         overdue_loans=overdue_loans,
         recommendations=recommendations,
         statistics=statistics

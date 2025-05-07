@@ -83,9 +83,9 @@
                                     </a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('user_routes.loans') }}">
                                         <i class="bi bi-book me-2"></i>Mis Préstamos
-                                        {% set active_loans = current_user.loans.filter_by(is_returned=False).count() %}
-                                        {% if active_loans > 0 %}
-                                            <span class="badge bg-primary">{{ active_loans }}</span>
+                                        {% set active_loans_count = current_user.loans.filter_by(is_returned=False).count() %}
+                                        {% if active_loans_count > 0 %}
+                                        <span class="badge bg-primary">{{ active_loans_count }}</span>
                                         {% endif %}
                                     </a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('user_routes.reading_history') }}">

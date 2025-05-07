@@ -8,18 +8,50 @@
     <form method="POST" action="{{ url_for('user_routes.preferences') }}">
         {{ form.hidden_tag() }}
         
-        <div class="mb-3">
-            {{ form.preferred_genres.label(class="form-label") }}
-            {{ form.preferred_genres(class="form-select", multiple=True) }}
+        <!-- Selección de Géneros Preferidos -->
+        <div class="mb-4">
+            <label class="form-label">Géneros Preferidos</label>
+            <div>
+                {% for genre, label in form.preferred_genres.choices %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="genre_{{ genre }}" name="preferred_genres" value="{{ genre }}"
+                               {% if genre in form.preferred_genres.data %}checked{% endif %}>
+                        <label class="form-check-label" for="genre_{{ genre }}">{{ label }}</label>
+                    </div>
+                {% endfor %}
+            </div>
             {% if form.preferred_genres.errors %}
-                <div class="text-danger">
+                <div class="text-danger mt-2">
                     {% for error in form.preferred_genres.errors %}
                         {{ error }}
                     {% endfor %}
                 </div>
             {% endif %}
+            <small class="form-text text-muted">Selecciona uno o más géneros que te interesen.</small>
         </div>
-        
+
+        <!-- Preferencias de Autores -->
+        <div class="mb-4">
+            <label for="preferred_authors" class="form-label">Autores Preferidos</label>
+            <input type="text" id="preferred_authors" name="preferred_authors" class="form-control" 
+                   value="{{ current_preferences.get('favorite_authors', '') | join(', ') }}" 
+                   placeholder="Escribe los nombres de tus autores favoritos separados por comas">
+            <small class="form-text text-muted">Ejemplo: Gabriel García Márquez, J.K. Rowling, Stephen King</small>
+        </div>
+
+        <!-- Frecuencia de Lectura -->
+        <div class="mb-4">
+            <label for="reading_frequency" class="form-label">Frecuencia de Lectura</label>
+            <select id="reading_frequency" name="reading_frequency" class="form-select">
+                <option value="new_reader" {% if current_preferences.reading_frequency == 'New reader' %}selected{% endif %}>Nuevo lector</option>
+                <option value="occasional_reader" {% if current_preferences.reading_frequency == 'Occasional reader' %}selected{% endif %}>Lector ocasional</option>
+                <option value="regular_reader" {% if current_preferences.reading_frequency == 'Regular reader' %}selected{% endif %}>Lector regular</option>
+                <option value="avid_reader" {% if current_preferences.reading_frequency == 'Avid reader' %}selected{% endif %}>Lector ávido</option>
+            </select>
+            <small class="form-text text-muted">Selecciona la opción que mejor describa tu frecuencia de lectura.</small>
+        </div>
+
+        <!-- Botón de Guardar -->
         <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
     </form>
 </div>

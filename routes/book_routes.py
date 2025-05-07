@@ -271,7 +271,8 @@ def read_book(book_id):
     if not book_content:
         flash('Book content not available.', 'warning')
         return redirect(url_for('book_routes.book_detail', book_id=book_id))
-    
+    book_content = get_book_content(book_id)
+    print(f"Book ID: {book_id}, Content: {book_content}")
     # Track interaction
     track_user_interaction(current_user.id, book_id, 'read')
     
