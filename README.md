@@ -172,24 +172,16 @@ librimongo/
 - **Perfil de Usuario**: Gestionar cuenta y ver historial de préstamos
 - **Panel de Administración**: Gestionar libros, usuarios y préstamos (solo admin)
 
-## Importación de Datos
+### Herramienta de administración
 
-El script `importador.py` permite importar datos desde la aplicación original Libritxt 1.0:
-
-```bash
-python importador.py --source "/ruta/a/Libritxt 1.0/data" --covers-dest "static/covers"
-```
-
-Opciones:
-- `--source`: Directorio fuente que contiene los datos de Libritxt 1.0
-- `--covers-dest`: Directorio destino para las portadas de libros
-- `--reset`: Reiniciar las bases de datos antes de importar
-- `--skip-books`: Omitir la importación de libros
-- `--skip-users`: Omitir la importación de usuarios
-- `--skip-loans`: Omitir la importación de préstamos
-- `--skip-reviews`: Omitir la importación de reseñas
-- `--resume`: Reanudar desde el último ítem importado
-- `--verbose`: Incrementar la verbosidad
+- Ejecuta toolbook.py para abrir la interfaz gráfica:
+  ```bash
+  python toolbook.py
+  ```
+- Funcionalidades:
+  - Inspeccionar tablas de MariaDB y colecciones de MongoDB.
+  - Importar libros y portadas desde archivos.
+  - Eliminar datos de ambas bases de datos.
 
 ## Gestión con Docker
 
@@ -226,7 +218,3 @@ Verificar estilo con Flake8:
 ```bash
 flake8
 ```
-
-## Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para más detalles.

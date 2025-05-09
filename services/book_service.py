@@ -115,16 +115,10 @@ def search_books(query, page=1, per_page=12):
     return pagination.items, pagination.pages, pagination.total
 
 def get_book_content(book_id):
-    """
-    Get the text content of a book.
-    
-    Args:
-        book_id (int): The ID of the book
-        
-    Returns:
-        dict: The book content, or None if not found
-    """
-    return BookText.get_by_book(book_id)
+    """Retrieve the content of a book from MongoDB."""
+    content = BookText.get_by_book(book_id)
+    print(f"Book ID: {book_id}, Content: {content}")
+    return content
 
 def get_book_reviews(book_id, limit=None):
     """

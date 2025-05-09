@@ -79,9 +79,12 @@ class Review(MongoBase):
     
     @classmethod
     def get_by_book(cls, book_id, limit=None):
-        """Get reviews for a specific book."""
-        return cls.find({'book_id': book_id}, sort=[('created_at', -1)], limit=limit)
-    
+        """
+        Get reviews for a specific book.
+        """
+        query = {'book_id': (book_id)}
+        return cls.find(query, sort=[('created_at', -1)], limit=limit)
+        
     @classmethod
     def get_by_user(cls, user_id, limit=None):
         """Get reviews by a specific user."""
@@ -152,12 +155,16 @@ class BookText(MongoBase):
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }
+        collection = cls.get_collection()  # Obtén la colección desde MongoBase
         return cls.insert_one(book_text)
     
-    @classmethod
-    def get_by_book(cls, book_id):
-        """Get text content for a specific book."""
-        return cls.find_one({'book_id': book_id})
+    @staticmethod
+    def get_by_book(book_id):
+        """
+        Get the text content of a book by its ID.
+        """
+        collection = BookText.get_collection()  # Obtén la colección desde MongoBase
+        return collection.find_one({'book_id': str(book_id)})
     
     @classmethod
     def search_text(cls, query, limit=10):
