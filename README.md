@@ -140,9 +140,14 @@ librimongo/
 3. Actualizar el archivo `.env` con los detalles de conexión a las bases de datos
 
 4. Importar datos desde Libritxt 1.0 (si están disponibles):
-   ```bash
-   python importador.py --source "/ruta/a/Libritxt 1.0/data"
-   ```
+   - Ejecuta toolbook.py para abrir la interfaz gráfica:
+     ```bash
+     python toolbook.py
+     ```
+   - Funcionalidades:
+     - Inspeccionar tablas de MariaDB y colecciones de MongoDB.
+     - Importar libros y portadas desde archivos.
+     - Eliminar datos de ambas bases de datos.
 
 ### Ejecución de la Aplicación
 
@@ -171,17 +176,6 @@ librimongo/
 - **Detalles del Libro**: Ver información del libro, reseñas y disponibilidad
 - **Perfil de Usuario**: Gestionar cuenta y ver historial de préstamos
 - **Panel de Administración**: Gestionar libros, usuarios y préstamos (solo admin)
-
-### Herramienta de administración
-
-- Ejecuta toolbook.py para abrir la interfaz gráfica:
-  ```bash
-  python toolbook.py
-  ```
-- Funcionalidades:
-  - Inspeccionar tablas de MariaDB y colecciones de MongoDB.
-  - Importar libros y portadas desde archivos.
-  - Eliminar datos de ambas bases de datos.
 
 ## Gestión con Docker
 
