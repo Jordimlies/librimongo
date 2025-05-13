@@ -115,7 +115,7 @@ def search_books(query, page=1, per_page=12):
     return pagination.items, pagination.pages, pagination.total
 
 def get_book_content(book_id):
-    """Retrieve the content of a book from MongoDB."""
+    """Retrieve the content of a book from MongoDB using its ID."""
     content = BookText.get_by_book(book_id)
     print(f"Book ID: {book_id}, Content: {content}")
     return content

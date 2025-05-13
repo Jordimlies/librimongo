@@ -150,8 +150,8 @@ def import_books_and_covers(app, source_dir, covers_dest, mariadb_log_widget, mo
                 parts = line.strip().split('|')
                 if len(parts) >= 7:
                     try:
-                        # Convertir book_id a entero
-                        book_id = int(parts[0])  # Asegurarse de que sea un entero
+                        # Convertir book_id a entero y luego a cadena
+                        book_id = str(int(parts[0]))  # Asegurarse de que sea una cadena
                     except ValueError:
                         mariadb_log_widget.insert(END, f"Invalid book ID: {parts[0]}\n", "error")
                         continue  # Saltar esta línea si el ID no es válido
@@ -181,7 +181,7 @@ def import_books_and_covers(app, source_dir, covers_dest, mariadb_log_widget, mo
             db.session.commit()
             mariadb_log_widget.insert(END, "Books imported successfully.\n", "success")
             mongodb_log_widget.insert(END, "Book descriptions imported successfully.\n", "success")
-
+            
 # -------------------- Interfaz gráfica --------------------
 
 def main_gui():
