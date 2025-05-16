@@ -44,6 +44,8 @@ class PasswordChangeForm(FlaskForm):
 class PreferencesForm(FlaskForm):
     """Form for updating reading preferences."""
     preferred_genres = SelectMultipleField('Preferred Genres', choices=[])
+    preferred_authors = StringField('Preferred Authors', validators=[Optional()])
+    reading_frequency = StringField('Reading Frequency', validators=[Optional()])
     submit = SubmitField('Update Preferences')
 
 # Routes
@@ -198,39 +200,38 @@ def recommendations():
 @user_bp.route('/preferences', methods=['GET', 'POST'])
 @login_required
 def preferences():
-    """Update user reading preferences."""
-    # Get all available genres
+    """Actualizar las preferencias de lectura del usuario."""
+    # Obtener todos los géneros disponibles
     all_genres = get_genres()
-    
-    # Get user's current preferences
+
+    # Obtener las preferencias actuales del usuario desde MongoDB
     user_preferences = get_user_reading_preferences(current_user.id)
-    
-    # Create form
+
+    # Crear el formulario
     form = PreferencesForm()
     form.preferred_genres.choices = [(genre, genre) for genre in all_genres]
-    
+
+    # Prellenar el formulario con las preferencias actuales
     if request.method == 'GET':
-        form.preferred_genres.data = user_preferences.get('favorite_genres', [])
-    
+        form.preferred_genres.data = user_preferences.get('preferred_genres', [])
+        form.preferred_authors.data = ', '.join(user_preferences.get('preferred_authors', [])).split(', ')
+        form.reading_frequency.data = user_preferences.get('reading_frequency', 'new_reader')
+
     if form.validate_on_submit():
-        # Debug: Print submitted data
-        print(f"Submitted genres: {form.preferred_genres.data}")
-        print(f"Submitted authors: {request.form.get('preferred_authors')}")
-        print(f"Submitted frequency: {request.form.get('reading_frequency')}")
-        
+        # Guardar las preferencias en MongoDB
         success = update_user_preferences(
-            current_user.id,
+            user_id=current_user.id,
             preferred_genres=form.preferred_genres.data,
             preferred_authors=request.form.get('preferred_authors', '').split(','),
             reading_frequency=request.form.get('reading_frequency')
         )
-        
+
         if success:
             flash('Preferencias actualizadas correctamente.', 'success')
             return redirect(url_for('user_routes.profile'))
         else:
             flash('Error al actualizar las preferencias.', 'danger')
-    
+
     return render_template(
         'user_preferences.html',
         form=form,

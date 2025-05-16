@@ -32,9 +32,9 @@
                 </div>
                 <div class="card-body">
                     <h6>Géneros Favoritos</h6>
-                    {% if preferences.favorite_genres %}
+                    {% if preferences.preferred_genres %}
                         <div class="mb-3">
-                            {% for genre in preferences.favorite_genres %}
+                            {% for genre in preferences.preferred_genres %}
                                 <a href="{{ url_for('book_routes.book_list', genre=genre) }}" class="text-decoration-none">
                                     <span class="badge bg-primary me-1">{{ genre }}</span>
                                 </a>
@@ -45,9 +45,9 @@
                     {% endif %}
                     
                     <h6>Autores Favoritos</h6>
-                    {% if preferences.favorite_authors %}
+                    {% if preferences.preferred_authors %}
                         <ul class="list-unstyled">
-                            {% for author in preferences.favorite_authors %}
+                            {% for author in preferences.preferred_authors %}
                                 <li>
                                     <a href="{{ url_for('book_routes.book_list', author=author) }}" class="text-decoration-none">
                                         {{ author }}
@@ -59,7 +59,19 @@
                         <p class="text-muted">Aún no tienes autores favoritos.</p>
                     {% endif %}
                     
-                    <p><strong>Nivel de Lectura:</strong> {{ preferences.reading_frequency }}</p>
+                    <p><strong>Nivel de Lectura:</strong> 
+                        {% if preferences.reading_frequency == 'new_reader' %}
+                            Nuevo lector
+                        {% elif preferences.reading_frequency == 'occasional_reader' %}
+                            Lector ocasional
+                        {% elif preferences.reading_frequency == 'regular_reader' %}
+                            Lector regular
+                        {% elif preferences.reading_frequency == 'avid_reader' %}
+                            Lector ávido
+                        {% else %}
+                            Sin especificar
+                        {% endif %}
+                    </p>
                     
                     <div class="d-grid">
                         <a href="{{ url_for('user_routes.preferences') }}" class="btn btn-outline-primary">Actualizar Preferencias</a>

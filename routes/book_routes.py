@@ -20,6 +20,7 @@ from services.auth_service import require_role
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from models.mongodb_models import LoanHistory
 
 # Create blueprint
 book_bp = Blueprint('book_routes', __name__, url_prefix='/books')
@@ -243,7 +244,7 @@ def lend_book_route(book_id):
     
     return redirect(url_for('book_routes.book_detail', book_id=book_id))
 
-@book_bp.route('/loans/<int:loan_id>/return', methods=['POST'])
+@book_bp.route('/loans/<string:loan_id>/return', methods=['POST'])
 @login_required
 def return_book_route(loan_id):
     """Return a book."""
@@ -461,3 +462,22 @@ def api_search():
         'total_pages': total_pages,
         'total_items': total_items
     })
+
+@book_bp.route('/<int:book_id>/mark_as_read', methods=['POST'])
+@login_required
+def mark_as_read(book_id):
+    """Marca un libro como leído por el usuario actual."""
+    try:
+        # Registrar la acción en LoanHistory o en otra estructura
+        LoanHistory.insert_one({
+            'user_id': current_user.id,
+            'book_id': book_id,
+            'action': 'read',
+            'timestamp': datetime.utcnow()
+        })
+        flash('Libro marcado como leído.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error marcando libro como leído: {str(e)}")
+        flash('Error al marcar el libro como leído.', 'danger')
+    
+    return redirect(url_for('book_routes.book_detail', book_id=book_id))

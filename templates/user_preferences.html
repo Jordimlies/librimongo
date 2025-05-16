@@ -34,19 +34,19 @@
         <div class="mb-4">
             <label for="preferred_authors" class="form-label">Autores Preferidos</label>
             <input type="text" id="preferred_authors" name="preferred_authors" class="form-control" 
-                   value="{{ current_preferences.get('favorite_authors', '') | join(', ') }}" 
+                   value="{{ form.preferred_authors.data }}" 
                    placeholder="Escribe los nombres de tus autores favoritos separados por comas">
-            <small class="form-text text-muted">Ejemplo: Gabriel García Márquez, J.K. Rowling, Stephen King</small>
+            <small class="form-text text-muted">Ejemplo: Gabriel García Márquez,J.K. Rowling,Stephen King</small>
         </div>
 
         <!-- Frecuencia de Lectura -->
         <div class="mb-4">
             <label for="reading_frequency" class="form-label">Frecuencia de Lectura</label>
             <select id="reading_frequency" name="reading_frequency" class="form-select">
-                <option value="new_reader" {% if current_preferences.reading_frequency == 'New reader' %}selected{% endif %}>Nuevo lector</option>
-                <option value="occasional_reader" {% if current_preferences.reading_frequency == 'Occasional reader' %}selected{% endif %}>Lector ocasional</option>
-                <option value="regular_reader" {% if current_preferences.reading_frequency == 'Regular reader' %}selected{% endif %}>Lector regular</option>
-                <option value="avid_reader" {% if current_preferences.reading_frequency == 'Avid reader' %}selected{% endif %}>Lector ávido</option>
+                <option value="new_reader" {% if form.reading_frequency.data == 'new_reader' %}selected{% endif %}>Nuevo lector</option>
+                <option value="occasional_reader" {% if form.reading_frequency.data == 'occasional_reader' %}selected{% endif %}>Lector ocasional</option>
+                <option value="regular_reader" {% if form.reading_frequency.data == 'regular_reader' %}selected{% endif %}>Lector regular</option>
+                <option value="avid_reader" {% if form.reading_frequency.data == 'avid_reader' %}selected{% endif %}>Lector ávido</option>
             </select>
             <small class="form-text text-muted">Selecciona la opción que mejor describa tu frecuencia de lectura.</small>
         </div>

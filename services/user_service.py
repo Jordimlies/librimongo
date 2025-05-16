@@ -5,7 +5,7 @@ Handles user profile management, reading history, and preferences.
 
 from flask import current_app
 from models.mariadb_models import User, Loan, Book, db
-from models.mongodb_models import Review, LoanHistory
+from models.mongodb_models import Review, LoanHistory, UserPreferences
 from services.recommendation_service import get_recommendations_for_user, track_user_interaction
 from utils.helpers import log_activity
 from datetime import datetime, timezone
@@ -87,6 +87,8 @@ def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
     for loan in loan_history:
         book = Book.query.get(loan['book_id'])
         if book:
+            # Mapear `_id` a `id` en el objeto `loan`
+            loan['id'] = str(loan['_id'])  # Convertir `_id` a string para evitar problemas de serialización
             history_items.append({
                 'loan': loan,
                 'book': book
@@ -180,84 +182,45 @@ def get_user_active_loans(user_id):
 
 def get_user_reading_preferences(user_id):
     """
-    Get a user's reading preferences based on their history.
-    
+    Get a user's reading preferences.
+
     Args:
         user_id (int): The ID of the user
-        
+
     Returns:
         dict: Reading preferences
     """
-    # Get books the user has read
-    loan_history = list(LoanHistory.get_by_user(user_id))
-    book_ids = [loan['book_id'] for loan in loan_history]
-    
-    if not book_ids:
-        return {
-            'favorite_genres': [],
-            'favorite_authors': [],
-            'reading_frequency': 'New user'
-        }
-    
-    # Get books
-    books = Book.query.filter(Book.id.in_(book_ids)).all()
-    
-    # Calculate favorite genres
-    genres = [book.genre for book in books if book.genre]
-    genre_counts = {}
-    for genre in genres:
-        genre_counts[genre] = genre_counts.get(genre, 0) + 1
-    
-    favorite_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)[:3]
-    favorite_genres = [genre for genre, count in favorite_genres]
-    
-    # Calculate favorite authors
-    authors = [book.author for book in books if book.author]
-    author_counts = {}
-    for author in authors:
-        author_counts[author] = author_counts.get(author, 0) + 1
-    
-    favorite_authors = sorted(author_counts.items(), key=lambda x: x[1], reverse=True)[:3]
-    favorite_authors = [author for author, count in favorite_authors]
-    
-    # Calculate reading frequency
-    if len(loan_history) >= 20:
-        reading_frequency = 'Avid reader'
-    elif len(loan_history) >= 10:
-        reading_frequency = 'Regular reader'
-    elif len(loan_history) >= 5:
-        reading_frequency = 'Occasional reader'
-    else:
-        reading_frequency = 'New reader'
-    
+    preferences = UserPreferences.get_preferences(user_id)
     return {
-        'favorite_genres': favorite_genres,
-        'favorite_authors': favorite_authors,
-        'reading_frequency': reading_frequency
+        'preferred_genres': preferences.get('preferred_genres', []),
+        'preferred_authors': preferences.get('preferred_authors', []),
+        'reading_frequency': preferences.get('reading_frequency', 'New reader')
     }
 
-def update_user_preferences(user_id, preferred_genres=None, preferred_authors=None):
+def update_user_preferences(user_id, preferred_genres=None, preferred_authors=None, reading_frequency=None):
     """
     Update a user's reading preferences.
-    
+
     Args:
         user_id (int): The ID of the user
         preferred_genres (list, optional): Preferred genres
         preferred_authors (list, optional): Preferred authors
-        
+        reading_frequency (str, optional): Reading frequency
+
     Returns:
         bool: Whether the update was successful
     """
-    # This would typically store preferences in a user_preferences collection in MongoDB
-    # For now, we'll just log the activity
-    details = {}
-    if preferred_genres is not None:
-        details['preferred_genres'] = preferred_genres
-    if preferred_authors is not None:
-        details['preferred_authors'] = preferred_authors
-    
-    log_activity('update_preferences', user_id=user_id, details=details)
-    return True
+    try:
+        UserPreferences.update_preferences(
+            user_id=user_id,
+            preferred_genres=preferred_genres,
+            preferred_authors=preferred_authors,
+            reading_frequency=reading_frequency
+        )
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error updating preferences for user {user_id}: {str(e)}")
+        return False
 
 def get_overdue_loans(user_id):
     """
@@ -302,7 +265,7 @@ def get_user_statistics(user_id):
     loan_history = list(LoanHistory.get_by_user(user_id))
     
     # Calculate statistics
-    total_books_read = len({loan['book_id'] for loan in loan_history if loan.get('is_returned', False)})
+    total_books_read = len({loan['book_id'] for loan in loan_history if loan.get('action') == 'read'})
     
     # Calculate average rating given
     reviews = list(Review.find({'user_id': user_id}))

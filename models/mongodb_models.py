@@ -48,11 +48,19 @@ class MongoBase:
         return result.inserted_id
     
     @classmethod
-    def update_one(cls, query, update):
-        """Update a document in the collection."""
-        update['$set'] = update.get('$set', {})
-        update['$set']['updated_at'] = datetime.utcnow()
-        return cls.get_collection().update_one(query, update)
+    def update_one(cls, filter, update, upsert=False):
+        """
+        Update a single document matching the filter.
+
+        Args:
+            filter (dict): The filter to match the document.
+            update (dict): The update operations to apply.
+            upsert (bool): Whether to insert the document if it doesn't exist.
+
+        Returns:
+            pymongo.results.UpdateResult: The result of the update operation.
+        """
+        return cls.get_collection().update_one(filter, update, upsert=upsert)
     
     @classmethod
     def delete_one(cls, query):
@@ -132,7 +140,15 @@ class LoanHistory(MongoBase):
     def get_by_book(cls, book_id, limit=None):
         """Get loan history for a specific book."""
         return cls.find({'book_id': book_id}, sort=[('loan_date', -1)], limit=limit)
-
+    
+    @classmethod
+    def insert_one(cls, data):
+        """
+        Inserta un nuevo documento en la colección de historial.
+        Args:
+            data (dict): Datos del historial a insertar.
+        """
+        cls.get_collection().insert_one(data)
 
 class BookText(MongoBase):
     """Model for storing book text content."""
@@ -175,3 +191,56 @@ class BookText(MongoBase):
             sort=[('score', {'$meta': 'textScore'})],
             limit=limit
         )
+    
+class UserPreferences(MongoBase):
+    """Model for storing user reading preferences."""
+    collection_name = 'user_preferences'
+
+    @classmethod
+    def update_preferences(cls, user_id, preferred_genres=None, preferred_authors=None, reading_frequency=None):
+        """
+        Update or create user preferences.
+
+        Args:
+            user_id (int): The ID of the user
+            preferred_genres (list, optional): Preferred genres
+            preferred_authors (list, optional): Preferred authors
+            reading_frequency (str, optional): Reading frequency
+
+        Returns:
+            dict: The updated preferences document
+        """
+        preferences = {
+            'user_id': user_id,
+            'preferred_genres': preferred_genres or [],
+            'preferred_authors': preferred_authors or [],
+            'reading_frequency': reading_frequency or 'New reader',
+            'updated_at': datetime.utcnow()
+        }
+
+        cls.update_one(
+            {'user_id': user_id},  # Filtro
+            {'$set': preferences},  # Actualización
+            upsert=True  # Crear si no existe
+        )
+        return preferences
+
+    @classmethod
+    def get_preferences(cls, user_id):
+        """
+        Get user preferences.
+
+        Args:
+            user_id (int): The ID of the user
+
+        Returns:
+            dict: The user's preferences
+        """
+        preferences = cls.find_one({'user_id': user_id})
+        if not preferences:
+            return {
+                'preferred_genres': [],
+                'preferred_authors': [],
+                'reading_frequency': 'New reader'
+            }
+        return preferences

@@ -44,7 +44,9 @@ def init_mongodb():
             db.create_collection('loan_history')
         if 'book_texts' not in db.list_collection_names():
             db.create_collection('book_texts')
-        
+        if 'user_preferences' not in db.list_collection_names():
+            db.create_collection('user_preferences')
+
         # Create indexes for reviews collection
         reviews = db['reviews']
         reviews.create_index([('book_id', ASCENDING)])
@@ -62,6 +64,10 @@ def init_mongodb():
         book_texts = db['book_texts']
         book_texts.create_index([('book_id', ASCENDING)], unique=True)
         book_texts.create_index([('content', TEXT)], default_language='english')
+        
+        # Create indexes for user_preferences collection
+        user_preferences = db['user_preferences']
+        user_preferences.create_index([('user_id', ASCENDING)], unique=True)  # Índice único para user_id
         
         current_app.logger.info("MongoDB collections and indexes created successfully")
         return True
