@@ -130,6 +130,52 @@
                 </div>
                 <div class="card-body">
                     <div id="readingHistoryChart" style="height: 250px;"></div>
+                    <hr class="my-4">
+                    <h6 class="mb-3">Libros que He Leído</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Libro</th>
+                                    <th>Autor</th>
+                                    <th>Prestado</th>
+                                    <th>Devuelto</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in reading_history %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="text-decoration-none">
+                                                {{ item.book.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ item.book.author }}</td>
+                                        <td>{{ item.loan.loan_date.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if item.loan.is_returned %}
+                                                {{ item.loan.return_date.strftime('%Y-%m-%d') }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.loan.is_returned %}
+                                                <span class="badge bg-secondary">Devuelto</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Activo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('book_routes.book_detail', book_id=item.book.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -265,44 +311,5 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Gráfico de historial de lectura
-        const ctx = document.getElementById('readingHistoryChart').getContext('2d');
-        
-        // Extraer datos de estadísticas
-        const monthlyReads = {{ statistics.monthly_reads|tojson }};
-        const labels = monthlyReads.map(item => {
-            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            return `${monthNames[item.month-1]} ${item.year}`;
-        });
-        const data = monthlyReads.map(item => item.count);
-        
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Libros Leídos',
-                    data: data,
-                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

@@ -16,6 +16,7 @@ from services.user_service import (
 from services.auth_service import change_password, update_user_profile
 from services.book_service import get_genres
 from services.auth_service import require_role
+from models.mariadb_models import User, db
 
 # Create blueprint
 user_bp = Blueprint('user_routes', __name__, url_prefix='/user')
@@ -274,6 +275,58 @@ def view_user(user_id):
         preferences=preferences,
         active_loans=active_loans
     )
+
+@user_bp.route('/admin/users')
+@login_required
+@require_role('admin')
+def manage_users():
+    if not current_user.is_admin:
+        abort(403)
+    
+    users = User.query.order_by(User.id).all()
+    return render_template("manage_users.html", users=users)
+
+# Edit user route
+@user_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@require_role('admin')
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    form = ProfileForm(obj=user)
+
+    if form.validate_on_submit():
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+        user.email = form.email.data
+        try:
+            db.session.commit()
+            flash('Usuario actualizado correctamente.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar el usuario: {e}', 'danger')
+        return redirect(url_for('user_routes.manage_users'))
+
+    return render_template('edit_user.html', form=form, user=user)
+
+# Delete user route
+@user_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@require_role('admin')
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("No puedes eliminar tu propia cuenta mientras estás conectado.", 'danger')
+        return redirect(url_for('user_routes.manage_users'))
+    
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash("Usuario eliminado correctamente.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar el usuario: {e}', 'danger')
+    
+    return redirect(url_for('user_routes.manage_users'))
 
 @user_bp.route('/dashboard')
 @login_required
