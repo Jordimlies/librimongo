@@ -116,7 +116,7 @@ def change_password_route():
 @user_bp.route('/history')
 @login_required
 def reading_history():
-    """Display user reading history."""
+    """Muestra el historial de lectura del usuario."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     include_active = request.args.get('include_active', 'true') == 'true'

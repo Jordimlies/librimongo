@@ -9,6 +9,7 @@ from models.mongodb_models import Review, LoanHistory, UserPreferences
 from services.recommendation_service import get_recommendations_for_user, track_user_interaction
 from utils.helpers import log_activity
 from datetime import datetime, timezone
+from dateutil.parser import parse
 
 def get_user_by_id(user_id):
     """
@@ -60,41 +61,43 @@ def get_user_profile(user_id):
     }
 
 def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
-    """
-    Get a user's reading history.
-    
-    Args:
-        user_id (int): The ID of the user
-        page (int): Page number (1-indexed)
-        per_page (int): Number of items per page
-        include_active (bool): Whether to include active loans
-        
-    Returns:
-        tuple: (history_items, total_pages, total_items)
-    """
-    # Get loan history from MongoDB
+    # Obtener historial de préstamos
     loan_history = list(LoanHistory.find(
         {'user_id': user_id},
         sort=[('loan_date', -1)]
     ))
     
-    # Filter out active loans if needed
+    # Filtrar préstamos activos si es necesario
     if not include_active:
         loan_history = [loan for loan in loan_history if loan.get('is_returned', False)]
     
-    # Get book details for each loan
-    history_items = []
+    clean_loan_history = []
     for loan in loan_history:
+        loan_date = loan.get('loan_date')
+        if not loan_date:
+            continue  # Ignorar préstamos sin fecha
+        
+        # Convertir cadena a datetime si es necesario
+        if isinstance(loan_date, str):
+            try:
+                loan['loan_date'] = parse(loan_date)
+            except Exception:
+                continue  # Ignorar si no se puede parsear
+        
+        clean_loan_history.append(loan)
+    
+    # Obtener detalles del libro para cada préstamo limpio
+    history_items = []
+    for loan in clean_loan_history:
         book = Book.query.get(loan['book_id'])
         if book:
-            # Mapear `_id` a `id` en el objeto `loan`
-            loan['id'] = str(loan['_id'])  # Convertir `_id` a string para evitar problemas de serialización
+            loan['id'] = str(loan['_id'])
             history_items.append({
                 'loan': loan,
                 'book': book
             })
     
-    # Manual pagination
+    # Paginación manual
     total_items = len(history_items)
     total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
     

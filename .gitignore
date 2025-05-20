@@ -4,3 +4,6 @@ config/.env
 data
 static/covers
 *.log
+Archivo.zip
+docu.txt
+.gitignore

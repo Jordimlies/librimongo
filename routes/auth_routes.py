@@ -1,6 +1,6 @@
 """
-Authentication routes for LibriMongo application.
-Handles user registration, login, and logout.
+Rutas de autenticación para la aplicación LibriMongo.
+Gestiona el registro, inicio y cierre de sesión de usuarios.
 """
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
@@ -16,38 +16,38 @@ auth_bp = Blueprint('auth_routes', __name__)
 
 # Form classes
 class LoginForm(FlaskForm):
-    """Form for user login."""
-    username = StringField('Username or Email', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Log In')
+    """Formulario para el inicio de sesión del usuario."""
+    username = StringField('Usuario o Correo Electrónico', validators=[DataRequired()])
+    password = PasswordField('Contraseña', validators=[DataRequired()])
+    remember_me = BooleanField('Recordarme')
+    submit = SubmitField('Iniciar Sesión')
 
 class RegistrationForm(FlaskForm):
-    """Form for user registration."""
-    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
-    email = EmailField('Email', validators=[DataRequired(), Email(), Length(max=120)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    first_name = StringField('First Name', validators=[Length(max=64)])
-    last_name = StringField('Last Name', validators=[Length(max=64)])
-    submit = SubmitField('Register')
+    """Formulario para el registro de usuarios."""
+    username = StringField('Nombre de Usuario', validators=[DataRequired(), Length(min=3, max=64)])
+    email = EmailField('Correo Electrónico', validators=[DataRequired(), Email(), Length(max=120)])
+    password = PasswordField('Contraseña', validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField('Confirmar Contraseña', validators=[DataRequired(), EqualTo('password')])
+    first_name = StringField('Nombre', validators=[Length(max=64)])
+    last_name = StringField('Apellido', validators=[Length(max=64)])
+    submit = SubmitField('Registrarse')
     
     def validate_username(self, username):
-        """Validate that the username is unique."""
+        """Valida que el nombre de usuario sea único."""
         user = User.query.filter_by(username=username.data).first()
         if user:
-            raise ValidationError('Username already exists. Please choose a different one.')
+            raise ValidationError('El nombre de usuario ya existe. Por favor, elige otro.')
     
     def validate_email(self, email):
-        """Validate that the email is unique."""
+        """Valida que el correo electrónico sea único."""
         user = User.query.filter_by(email=email.data).first()
         if user:
-            raise ValidationError('Email already registered. Please use a different one.')
+            raise ValidationError('Correo electrónico ya registrado. Por favor, utiliza otro.')
 
 # Routes
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login_route():
-    """Handle user login."""
+    """Gestiona el inicio de sesión del usuario."""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -59,7 +59,7 @@ def login_route():
             next_page = request.args.get('next')
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for('index')
-            flash('Login successful!', 'success')
+            flash('¡Inicio de sesión exitoso!', 'success')
             return redirect(next_page)
         else:
             flash(user_or_error, 'danger')
@@ -69,14 +69,14 @@ def login_route():
 @auth_bp.route('/logout')
 @login_required
 def logout_route():
-    """Handle user logout."""
+    """Gestiona el cierre de sesión del usuario."""
     logout()
-    flash('You have been logged out.', 'info')
+    flash('Has cerrado sesión.', 'info')
     return redirect(url_for('index'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register_route():
-    """Handle user registration."""
+    """Gestiona el registro de nuevos usuarios."""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -91,7 +91,7 @@ def register_route():
         )
         
         if success:
-            flash('Registration successful! You can now log in.', 'success')
+            flash('¡Registro exitoso! Ya puedes iniciar sesión.', 'success')
             return redirect(url_for('auth_routes.login_route'))
         else:
             flash(user_or_error, 'danger')
