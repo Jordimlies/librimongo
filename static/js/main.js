@@ -1,21 +1,21 @@
 /**
- * LibriMongo - Main JavaScript File
+ * LibriMongo - Fitxer JavaScript principal
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap tooltips
+    // Inicialitza els tooltips de Bootstrap
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
     
-    // Initialize Bootstrap popovers
+    // Inicialitza els popovers de Bootstrap
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
     
-    // Auto-dismiss alerts
+    // Tanca automàticament les alertes
     setTimeout(function() {
         var alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
         alerts.forEach(function(alert) {
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 5000);
     
-    // Add active class to current nav item
+    // Afegeix la classe activa a l'element de navegació actual
     var currentLocation = window.location.pathname;
     var navLinks = document.querySelectorAll('.navbar-nav .nav-link');
     navLinks.forEach(function(link) {
@@ -33,21 +33,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Sidebar filter functionality
+    // Funcionalitat del filtre lateral
     initSidebarFilters();
     
-    // Rating input enhancement
+    // Millora de l'entrada de valoració
     initRatingInput();
     
-    // Book search autocomplete
+    // Autocompletat de la cerca de llibres
     initSearchAutocomplete();
 });
 
 /**
- * Initialize sidebar filter functionality
+ * Inicialitza la funcionalitat del filtre lateral
  */
 function initSidebarFilters() {
-    // Auto-submit form when select fields change
+    // Envia automàticament el formulari quan canvien els camps de selecció
     const autoSubmitFields = document.querySelectorAll('#sidebarFilterForm select, #sidebarFilterForm input[type="checkbox"]');
     if (autoSubmitFields.length > 0) {
         autoSubmitFields.forEach(field => {
@@ -57,7 +57,7 @@ function initSidebarFilters() {
         });
     }
     
-    // Year range filter validation
+    // Validació del filtre de rang d'anys
     const yearFromInput = document.getElementById('year_from');
     const yearToInput = document.getElementById('year_to');
     
@@ -75,7 +75,7 @@ function initSidebarFilters() {
         });
     }
     
-    // Mobile filter toggle
+    // Alternança del filtre en dispositius mòbils
     const filterToggleBtn = document.getElementById('filterToggleBtn');
     const sidebarFilters = document.getElementById('sidebarFilters');
     
@@ -87,7 +87,7 @@ function initSidebarFilters() {
 }
 
 /**
- * Initialize rating input enhancement
+ * Inicialitza la millora de l'entrada de valoració
  */
 function initRatingInput() {
     const ratingInputs = document.querySelectorAll('.rating-input');
@@ -96,14 +96,14 @@ function initRatingInput() {
         const radioInputs = container.querySelectorAll('input[type="radio"]');
         const labels = container.querySelectorAll('label');
         
-        // Add star icons to labels
+        // Afegeix icones d'estrella a les etiquetes
         labels.forEach(label => {
             const value = label.getAttribute('for').replace('rating', '');
             label.innerHTML = '★';
             label.setAttribute('title', value + ' stars');
         });
         
-        // Highlight stars on hover and click
+        // Ressalta les estrelles en passar el cursor i fer clic
         radioInputs.forEach((input, index) => {
             input.addEventListener('change', function() {
                 updateStars(labels, index);
@@ -118,7 +118,7 @@ function initRatingInput() {
             resetStars(labels, radioInputs);
         });
         
-        // Initialize with current value
+        // Inicialitza amb el valor actual
         for (let i = 0; i < radioInputs.length; i++) {
             if (radioInputs[i].checked) {
                 updateStars(labels, i);
@@ -129,7 +129,7 @@ function initRatingInput() {
 }
 
 /**
- * Update star ratings display
+ * Actualitza la visualització de la valoració amb estrelles
  */
 function updateStars(labels, selectedIndex) {
     labels.forEach((label, i) => {
@@ -142,7 +142,7 @@ function updateStars(labels, selectedIndex) {
 }
 
 /**
- * Highlight stars on hover
+ * Ressalta les estrelles en passar el cursor
  */
 function highlightStars(labels, hoverIndex) {
     labels.forEach((label, i) => {
@@ -155,7 +155,7 @@ function highlightStars(labels, hoverIndex) {
 }
 
 /**
- * Reset stars to match selected value
+ * Reinicia les estrelles per a coincidir amb el valor seleccionat
  */
 function resetStars(labels, radioInputs) {
     let selectedIndex = -1;
@@ -177,7 +177,7 @@ function resetStars(labels, radioInputs) {
 }
 
 /**
- * Initialize search autocomplete
+ * Inicialitza l'autocompletat de la cerca
  */
 function initSearchAutocomplete() {
     const searchInput = document.querySelector('input[name="query"]');
@@ -191,7 +191,7 @@ function initSearchAutocomplete() {
             fetch(`/books/api/search?query=${encodeURIComponent(query)}&per_page=5`)
                 .then(response => response.json())
                 .then(data => {
-                    // This would be implemented if we had a dropdown for autocomplete
+                    // Això s'implementaria si tinguéssim un desplegable per a l'autocompletat
                     console.log('Search results:', data);
                 })
                 .catch(error => console.error('Error fetching search results:', error));
@@ -200,7 +200,7 @@ function initSearchAutocomplete() {
 }
 
 /**
- * Debounce function to limit API calls
+ * Funció de debounce per limitar les crides a l'API
  */
 function debounce(func, wait) {
     let timeout;

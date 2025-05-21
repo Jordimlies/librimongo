@@ -1,6 +1,6 @@
 """
-User service for LibriMongo application.
-Handles user profile management, reading history, and preferences.
+Servei d'usuari per a l'aplicació LibriMongo.
+Gestiona el perfil d'usuari, l'historial de lectura i les preferències.
 """
 
 from flask import current_app
@@ -13,38 +13,38 @@ from dateutil.parser import parse
 
 def get_user_by_id(user_id):
     """
-    Get a user by their ID.
+    Obté un usuari pel seu ID.
     
     Args:
-        user_id (int): The ID of the user
+        user_id (int): L'ID de l'usuari
         
     Returns:
-        User: The user object, or None if not found
+        User: L'objecte usuari, o None si no es troba
     """
     return User.query.get(user_id)
 
 def get_user_profile(user_id):
     """
-    Get a user's profile information.
+    Obté la informació del perfil d'un usuari.
     
     Args:
-        user_id (int): The ID of the user
+        user_id (int): L'ID de l'usuari
         
     Returns:
-        dict: The user's profile information
+        dict: La informació del perfil de l'usuari
     """
     user = get_user_by_id(user_id)
     if not user:
         return None
     
-    # Get user's active loans
+    # Obté els préstecs actius de l'usuari
     active_loans = Loan.query.filter_by(user_id=user_id, is_returned=False).all()
     
-    # Get user's reading history
+    # Obté l'historial de lectura de l'usuari
     loan_history = list(LoanHistory.get_by_user(user_id))
     total_books_read = len({loan['book_id'] for loan in loan_history if loan.get('is_returned', False)})
     
-    # Get user's reviews
+    # Obté les ressenyes de l'usuari
     reviews = list(Review.find({'user_id': user_id}))
     
     return {
@@ -61,13 +61,13 @@ def get_user_profile(user_id):
     }
 
 def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
-    # Obtener historial de préstamos
+    # Obtenir l'historial de préstecs
     loan_history = list(LoanHistory.find(
         {'user_id': user_id},
         sort=[('loan_date', -1)]
     ))
     
-    # Filtrar préstamos activos si es necesario
+    # Filtrar els préstecs actius si és necessari
     if not include_active:
         loan_history = [loan for loan in loan_history if loan.get('is_returned', False)]
     
@@ -75,18 +75,18 @@ def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
     for loan in loan_history:
         loan_date = loan.get('loan_date')
         if not loan_date:
-            continue  # Ignorar préstamos sin fecha
+            continue  # Ignorar préstecs sense data
         
-        # Convertir cadena a datetime si es necesario
+        # Convertir la cadena a datetime si és necessari
         if isinstance(loan_date, str):
             try:
                 loan['loan_date'] = parse(loan_date)
             except Exception:
-                continue  # Ignorar si no se puede parsear
+                continue  # Ignorar si no es pot parsejar
         
         clean_loan_history.append(loan)
     
-    # Obtener detalles del libro para cada préstamo limpio
+    # Obtenir detalls del llibre per a cada préstec net
     history_items = []
     for loan in clean_loan_history:
         book = Book.query.get(loan['book_id'])
@@ -97,7 +97,7 @@ def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
                 'book': book
             })
     
-    # Paginación manual
+    # Paginació manual
     total_items = len(history_items)
     total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
     
@@ -108,17 +108,17 @@ def get_user_reading_history(user_id, page=1, per_page=10, include_active=True):
 
 def get_user_reviews(user_id, page=1, per_page=10):
     """
-    Get reviews written by a user.
+    Obté les ressenyes escrites per un usuari.
     
     Args:
-        user_id (int): The ID of the user
-        page (int): Page number (1-indexed)
-        per_page (int): Number of items per page
+        user_id (int): L'ID de l'usuari
+        page (int): Número de pàgina (començant per 1)
+        per_page (int): Nombre d'elements per pàgina
         
     Returns:
         tuple: (reviews_with_books, total_pages, total_items)
     """
-    # Get reviews from MongoDB
+    # Obté ressenyes de MongoDB
     skip = (page - 1) * per_page
     reviews = list(Review.find(
         {'user_id': user_id},
@@ -127,11 +127,11 @@ def get_user_reviews(user_id, page=1, per_page=10):
         limit=per_page
     ))
     
-    # Get total count for pagination
+    # Obté el recompte total per a la paginació
     total_items = Review.get_collection().count_documents({'user_id': user_id})
     total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
     
-    # Get book details for each review
+    # Obté detalls del llibre per a cada ressenya
     reviews_with_books = []
     for review in reviews:
         book = Book.query.get(review['book_id'])
@@ -145,27 +145,27 @@ def get_user_reviews(user_id, page=1, per_page=10):
 
 def get_user_recommendations(user_id, limit=10):
     """
-    Get personalized book recommendations for a user.
+    Obté recomanacions de llibres personalitzades per a un usuari.
     
     Args:
-        user_id (int): The ID of the user
-        limit (int): Maximum number of recommendations to return
+        user_id (int): L'ID de l'usuari
+        limit (int): Nombre màxim de recomanacions a retornar
         
     Returns:
-        list: Recommended books
+        list: Llibres recomanats
     """
     return get_recommendations_for_user(user_id, limit=limit)
 
 def track_book_view(user_id, book_id):
     """
-    Track when a user views a book.
+    Registra quan un usuari visualitza un llibre.
     
     Args:
-        user_id (int): The ID of the user
-        book_id (int): The ID of the book
+        user_id (int): L'ID de l'usuari
+        book_id (int): L'ID del llibre
         
     Returns:
-        bool: Whether the tracking was successful
+        bool: Si el registre ha estat exitós
     """
     return track_user_interaction(user_id, book_id, 'view')
 
@@ -180,18 +180,18 @@ def get_user_active_loans(user_id):
                 'book': book,
                 'is_overdue': loan.is_overdue
             })
-    print(f"Active loans for user {user_id}: {active_loans} (type: {type(active_loans)})")  # Depuración
+    print(f"Préstecs actius per a l'usuari {user_id}: {active_loans} (tipus: {type(active_loans)})")  # Depuració
     return active_loans or []
 
 def get_user_reading_preferences(user_id):
     """
-    Get a user's reading preferences.
+    Obté les preferències de lectura d'un usuari.
 
     Args:
-        user_id (int): The ID of the user
+        user_id (int): L'ID de l'usuari
 
     Returns:
-        dict: Reading preferences
+        dict: Preferències de lectura
     """
     preferences = UserPreferences.get_preferences(user_id)
     return {
@@ -202,16 +202,16 @@ def get_user_reading_preferences(user_id):
 
 def update_user_preferences(user_id, preferred_genres=None, preferred_authors=None, reading_frequency=None):
     """
-    Update a user's reading preferences.
+    Actualitza les preferències de lectura d'un usuari.
 
     Args:
-        user_id (int): The ID of the user
-        preferred_genres (list, optional): Preferred genres
-        preferred_authors (list, optional): Preferred authors
-        reading_frequency (str, optional): Reading frequency
+        user_id (int): L'ID de l'usuari
+        preferred_genres (list, optional): Gèneres preferits
+        preferred_authors (list, optional): Autors preferits
+        reading_frequency (str, optional): Freqüència de lectura
 
     Returns:
-        bool: Whether the update was successful
+        bool: Si l'actualització ha estat exitosa
     """
     try:
         UserPreferences.update_preferences(
@@ -227,13 +227,13 @@ def update_user_preferences(user_id, preferred_genres=None, preferred_authors=No
 
 def get_overdue_loans(user_id):
     """
-    Get a user's overdue loans.
+    Obté els préstecs vençuts d'un usuari.
     
     Args:
-        user_id (int): The ID of the user
+        user_id (int): L'ID de l'usuari
         
     Returns:
-        list: Overdue loans with book details
+        list: Préstecs vençuts amb detalls del llibre
     """
     now = datetime.now(timezone.utc)
     loans = Loan.query.filter(
@@ -256,26 +256,26 @@ def get_overdue_loans(user_id):
 
 def get_user_statistics(user_id):
     """
-    Get statistics about a user's reading habits.
+    Obté estadístiques sobre els hàbits de lectura d'un usuari.
     
     Args:
-        user_id (int): The ID of the user
+        user_id (int): L'ID de l'usuari
         
     Returns:
-        dict: User statistics
+        dict: Estadístiques de l'usuari
     """
-    # Get loan history
+    # Obté l'historial de préstecs
     loan_history = list(LoanHistory.get_by_user(user_id))
     
-    # Calculate statistics
+    # Calcula les estadístiques
     total_books_read = len({loan['book_id'] for loan in loan_history if loan.get('action') == 'read'})
     
-    # Calculate average rating given
+    # Calcula la puntuació mitjana donada
     reviews = list(Review.find({'user_id': user_id}))
     ratings = [review.get('rating', 0) for review in reviews if 'rating' in review]
     avg_rating = sum(ratings) / len(ratings) if ratings else 0
     
-    # Calculate books read per month (last 6 months)
+    # Calcula llibres llegits per mes (últims 6 mesos)
     now = datetime.now(timezone.utc)
     months = {}
     for i in range(6):

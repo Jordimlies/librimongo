@@ -44,19 +44,26 @@
                         {% else %}
                             <span class="badge bg-danger mb-2">No hay copias disponibles</span>
                         {% endif %}
-                        
+
                         <div class="d-grid gap-2">
                             {% if current_user.is_authenticated %}
-                                {% if book.available_copies > 0 %}
+                                {% if can_read %}
+                                    <a href="{{ url_for('book_routes.read_book', book_id=book.id) }}" class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-book me-1"></i> Leer
+                                    </a>
+                                {% endif %}
+                                
+                                {% if can_lend %}
                                     <form method="POST" action="{{ url_for('book_routes.lend_book_route', book_id=book.id) }}">
                                         <button type="submit" class="btn btn-primary w-100">Pedir Prestado</button>
                                     </form>
-                                {% else %}
-                                    <button class="btn btn-primary w-100" disabled>No Disponible</button>
                                 {% endif %}
-                                <a href="{{ url_for('book_routes.read_book', book_id=book.id) }}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-book me-1"></i> Leer Vista Previa
-                                </a>
+                                
+                                {% if not can_read and not can_lend %}
+                                    <button class="btn btn-primary w-100" disabled>No Disponible</button>
+                                    <div class="text-muted text-center small">Ya hay una reserva activa o no puedes pedirlo ahora.</div>
+                                {% endif %}
+
                                 <form method="POST" action="{{ url_for('book_routes.mark_as_read', book_id=book.id) }}">
                                     <button type="submit" class="btn btn-success w-100">Marcar como leído</button>
                                 </form>

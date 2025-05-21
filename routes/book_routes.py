@@ -74,6 +74,7 @@ def book_list():
     """Display a list of books with filtering and pagination."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 12, type=int)
+    view_mode = request.args.get('view', 'grid')
     
     # Initialize search form
     form = BookSearchForm()
@@ -142,43 +143,50 @@ def book_list():
         start_item=start_item,  # Este es el valor calculado
         end_item=end_item,      # Este es el valor calculado
         form=form,
-        page_range=page_range   # Calculado previamente
+        page_range=page_range,   # Calculado previamente
+        view_mode=view_mode
     )
 
 @book_bp.route('/<int:book_id>')
 def book_detail(book_id):
-    """Display details for a specific book."""
     book = get_book_by_id(book_id)
     if not book:
         abort(404)
-    
-    # Track book view if user is logged in
+
     if current_user.is_authenticated:
         track_book_view(current_user.id, book_id)
-    
-    # Get reviews
+
     reviews = get_book_reviews(book_id)
     average_rating = get_average_rating(book_id) or 0
-    
-    # Get recommendations
+
     recommendations = []
     if current_user.is_authenticated:
         recommendations = get_recommendations_by_book(book_id)
-    
-    # Check if user has already reviewed this book
+
     user_review = None
     if current_user.is_authenticated:
         for review in reviews:
             if review.get('user_id') == current_user.id:
                 user_review = review
                 break
-    
-    # Initialize review form
+
     review_form = ReviewForm()
     if user_review:
         review_form.rating.data = user_review.get('rating', 0)
         review_form.text.data = user_review.get('text', '')
-    
+
+    # CONTROL PARA BOTÓN LEER Y PEDIR
+    can_read = False
+    can_lend = False
+    if current_user.is_authenticated:
+        from models.mongodb_models import LoanHistory
+        loan = LoanHistory.find_one({'user_id': current_user.id, 'book_id': book_id, 'action': 'loan', 'returned': False})
+        if loan:
+            can_read = True
+        else:
+            if book.available_copies > 0:
+                can_lend = True
+
     return render_template(
         'book_detail.html',
         book=book,
@@ -186,7 +194,9 @@ def book_detail(book_id):
         average_rating=average_rating,
         recommendations=recommendations,
         review_form=review_form,
-        user_review=user_review
+        user_review=user_review,
+        can_read=can_read,
+        can_lend=can_lend
     )
 
 @book_bp.route('/<int:book_id>/review', methods=['POST'])
