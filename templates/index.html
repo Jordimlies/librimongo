@@ -18,7 +18,7 @@
                         <i class="bi bi-person-plus me-1"></i> Regístrate
                     </a>
                 {% else %}
-                    <a href="{{ url_for('user_routes.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">
+                    <a class="btn btn-outline-secondary btn-lg px-4 disabled" href="#" tabindex="-1" aria-disabled="true">
                         <i class="bi bi-speedometer2 me-1"></i> Mi Panel
                     </a>
                 {% endif %}

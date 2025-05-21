@@ -1,0 +1,58 @@
+/* Modo oscuro global */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* Texto general */
+.dark-mode p,
+.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6,
+.dark-mode .card-title, .dark-mode .card-text,
+.dark-mode .list-group-item,
+.dark-mode td, .dark-mode th {
+    color: #e0e0e0 !important;
+}
+
+/* Enlaces */
+.dark-mode a {
+    color: #90caf9;
+}
+.dark-mode a:hover {
+    color: #64b5f6;
+}
+
+/* Tarjetas y tablas */
+.dark-mode .card, .dark-mode .table {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+
+/* Navegación y dropdowns */
+.dark-mode .navbar,
+.dark-mode .dropdown-menu {
+    background-color: #1c1c1c !important;
+    color: #e0e0e0;
+}
+
+/* Botones outline */
+.dark-mode .btn-outline-primary {
+    color: #90caf9;
+    border-color: #90caf9;
+}
+.dark-mode .btn-outline-primary:hover {
+    background-color: #90caf9;
+    color: #121212;
+}
+
+/* Badges */
+.dark-mode .badge {
+    background-color: #333;
+    color: #f0f0f0;
+}
+
+/* Alerts */
+.dark-mode .alert {
+    background-color: #222;
+    border-color: #444;
+    color: #f0f0f0;
+}
